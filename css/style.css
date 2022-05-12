@@ -1,25 +1,55 @@
-BODY {
-  background-image: linear-gradient(to bottom left, #ebdbff, #bff5cc);
-}
-DIV.block {
-  /*height: 100vh;*/
-}
-.parent {
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    display: flex;
-    align-items: center;
-    align-content: center; 
-    justify-content: center; 
-    overflow: auto;   
+HTML {
+  width: 100%;
+  height: 100%;
 }
 
-.block {
-    /*background: #edf6ff;*/
-    
+BODY { 
+  background-image: linear-gradient(to bottom left, #ebdbff, #bff5cc);
+}
+
+.parent {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  align-content: center; 
+  justify-content: center;
+  overflow: auto;
+}
+
+.mainblock {
+  max-width: 95vw;
+  max-height: 100vh;
+  
+}
+
+.flexblock {
+  background-color: rgba(0,0,0,0.04);
+  border-radius: 5px 5px;
+  padding: 5px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.control {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 8px;
+}
+
+.field, .add {
+  margin-right: 4px;
+}
+
+.field, .add, .test {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .success {
@@ -27,4 +57,21 @@ DIV.block {
   text-decoration-color: silver;
   color: silver;
   font-style: italic;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.task, .success {
+  background-color: rgba(0,0,0,0.06);
+  border-radius: 4px 4px;
+  padding: 7px;
+  margin-bottom: 8px;
+  margin-left: 5px;
+  margin-right: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
