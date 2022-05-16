@@ -23,15 +23,14 @@ BODY {
 .mainblock {
   max-width: 95vw;
   max-height: 100vh;
-  
 }
 
 .flexblock {
   background-color: rgba(0,0,0,0.04);
   border-radius: 5px 5px;
   padding: 5px;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  margin: 15px 0px;
+  
 }
 
 .control {

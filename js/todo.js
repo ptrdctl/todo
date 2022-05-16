@@ -3,6 +3,9 @@
 const field = document.querySelector('.field');
 const button = document.querySelector('.add');
 button.addEventListener('click', addTask);
+document.addEventListener('keydown', function(event) {
+  if(event.key == 'Enter') {addTask()}
+});
 const list = document.querySelector('.list');
 
 
