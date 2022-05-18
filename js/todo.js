@@ -2,11 +2,13 @@
 
 const field = document.querySelector('.field');
 const button = document.querySelector('.add');
+const list = document.querySelector('.list');
+
 button.addEventListener('click', addTask);
 document.addEventListener('keydown', function(event) {
   if(event.key == 'Enter') {addTask()}
 });
-const list = document.querySelector('.list');
+document.addEventListener('dblclick', startEditTask);
 
 
 function createTask(value) {
@@ -31,7 +33,6 @@ function addTask() {
     
     const newTask = createTask(field.value);
     list.prepend(newTask);
-    //list.appendChild(newTask);
     field.value = '';
     
   }
@@ -41,11 +42,78 @@ function completeTask(event) {
   
   const target = event.target;
   
-  if(target.checked) {
+  if( target.checked ) {
     target.parentElement.classList.add('success');
   } else {
     target.parentElement.classList.remove('success');
   }
+}
+
+
+function startEditTask(event) {
+  
+  const target = event.target;
+  if( target.className !== 'task' ) return;
+  
+  document.removeEventListener('dblclick', startEditTask);
+  
+  const task = target;
+  const text = task.textContent;
+  task.firstChild.remove();
+  task.lastChild.remove();
+  const textArea = document.createElement('textarea');
+  textArea.textContent = text;
+  task.append(textArea);
+  
+  const button = document.createElement('button');
+  button.textContent = 'Ok';
+  task.append(button);
+  button.addEventListener('click', finishEditTaskByOk);
+  
+  function pressEnterForEndEditTask(event) {
+    
+    if( event.key == 'Enter' ) {
+      finishEditTaskByEnter(task);
+    }
+    
+  }
+  document.addEventListener('keydown', pressEnterForEndEditTask);
+  
+  function finishEditTaskByEnter(task) {
+    
+    console.log(task);
+  
+    if( task.firstChild.value.trim() === '' ) return;
+    finishEditTask(task);
+    document.removeEventListener('keydown', pressEnterForEndEditTask);
+  
+  }
+  
+  function finishEditTaskByOk(event) {
+  
+    if( event.target?.previousElementSibling.value.trim() === '' ) return;
+  
+      const task = event.target.parentElement;
+      finishEditTask(task);
+      document.removeEventListener('keydown', pressEnterForEndEditTask);
+  
+  }
+  
+}
+
+
+function finishEditTask(task) {
+  
+  const text = task.firstChild.value.trim();
+  task?.firstChild.remove();
+  task?.lastChild.remove();
+  task.textContent = text;
+  const checkbox = document.createElement('input');
+  checkbox.setAttribute('type', 'checkbox');
+  checkbox.classList.add('status');
+  task.append(checkbox);
+  checkbox.addEventListener('click', completeTask);
+  document.addEventListener('dblclick', startEditTask);
 }
 
 // development code:
