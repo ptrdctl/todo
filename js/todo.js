@@ -9,13 +9,17 @@ document.addEventListener('keydown', function(event) {
   if(event.key == 'Enter') {addTask()}
 });
 document.addEventListener('dblclick', startEditTask);
+document.addEventListener('pointerdown', deleteTask);
 
 
 function createTask(value) {
   
   const task = document.createElement('div');
-  task.textContent = value;
+  const textBlock = document.createElement('div');
+  textBlock.textContent = value;
+  task.append(textBlock);
   task.classList.add('task');
+  task.firstChild.classList.add('dontChangeCursor');
   
   const checkbox = document.createElement('input');
   checkbox.setAttribute('type', 'checkbox');
@@ -26,6 +30,7 @@ function createTask(value) {
   return task;
   
 }
+
 
 function addTask() {
   
@@ -38,6 +43,7 @@ function addTask() {
   }
 }
 
+
 function completeTask(event) {
   
   const target = event.target;
@@ -47,6 +53,7 @@ function completeTask(event) {
   } else {
     target.parentElement.classList.remove('success');
   }
+  
 }
 
 
@@ -56,9 +63,10 @@ function startEditTask(event) {
   if( target.className !== 'task' ) return;
   
   document.removeEventListener('dblclick', startEditTask);
+  document.removeEventListener('pointerdown', deleteTask);
   
   const task = target;
-  const text = task.textContent;
+  const text = task.firstChild.textContent;
   task.firstChild.remove();
   task.lastChild.remove();
   const textArea = document.createElement('textarea');
@@ -70,34 +78,33 @@ function startEditTask(event) {
   task.append(button);
   button.addEventListener('click', finishEditTaskByOk);
   
-  function pressEnterForEndEditTask(event) {
+  document.addEventListener('keydown', pressEnterToEndEditTask);
+  
+  function pressEnterToEndEditTask(event) {
     
     if( event.key == 'Enter' ) {
       finishEditTaskByEnter(task);
     }
     
   }
-  document.addEventListener('keydown', pressEnterForEndEditTask);
   
   function finishEditTaskByEnter(task) {
     
-    console.log(task);
-  
     if( task.firstChild.value.trim() === '' ) return;
     finishEditTask(task);
-    document.removeEventListener('keydown', pressEnterForEndEditTask);
-  
+    document.removeEventListener('keydown', pressEnterToEndEditTask);
+    
   }
   
   function finishEditTaskByOk(event) {
   
-    if( event.target?.previousElementSibling.value.trim() === '' ) return;
+    if( event.target.previousElementSibling.value.trim() === '' ) return;
   
       const task = event.target.parentElement;
       finishEditTask(task);
-      document.removeEventListener('keydown', pressEnterForEndEditTask);
-  
-  }
+      document.removeEventListener('keydown', pressEnterToEndEditTask);
+      
+    }
   
 }
 
@@ -105,23 +112,134 @@ function startEditTask(event) {
 function finishEditTask(task) {
   
   const text = task.firstChild.value.trim();
-  task?.firstChild.remove();
-  task?.lastChild.remove();
-  task.textContent = text;
+  task.firstChild.remove();
+  task.lastChild.remove();
+  const textBlock = document.createElement('div');
+  task.appendChild(textBlock);
+  task.firstChild.textContent = text;
   const checkbox = document.createElement('input');
   checkbox.setAttribute('type', 'checkbox');
   checkbox.classList.add('status');
+  task.firstChild.classList.add('dontChangeCursor');
+  
   task.append(checkbox);
   checkbox.addEventListener('click', completeTask);
   document.addEventListener('dblclick', startEditTask);
+  document.addEventListener('pointerdown', deleteTask);
+  
 }
+
+
+
+function deleteTask (event) {
+  
+  
+  const target = event.target;
+  if( !(target.className === 'task' || target.parentElement.className === 'task') || target.className === 'status' ) return;
+  let task;
+  if( target.parentElement.className == 'task' ) {
+    task = target.parentElement;
+  } else if( target.className == 'task' ) {
+    task = target;
+  }
+  
+  event.preventDefault();
+  /*console.log(target);
+  task.onselectstart = task.onmousedown 
+  = task.firstChild.onselectstart = task.firstChild.onmousedown
+  task.onpointerdown = task.firstChild.onpointerdown = function() {
+    console.log('select was prevented')
+    return false
+  }*/
+  //task.onmousedown = null; // rewrite handler
+  
+  task.setPointerCapture(event.pointerId);
+  const startX = event.clientX;
+  
+  
+  document.addEventListener('pointerup', onPointerUpAfterPointerDown);
+  document.addEventListener('pointermove', onPointerMove);
+  let isCancelingByPointerUpAfterPointerDown = false;
+  
+  function onPointerUpAfterPointerDown() {
+    
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUpAfterPointerDown);
+    isCancelingByPointerUpAfterPointerDown = true;
+    
+  }
+  
+  if( isCancelingByPointerUpAfterPointerDown ) return;
+  
+  
+  let isCancelingByPointerUpAfterPointerShortMove = false;
+  let IsCancelingDeleteByUndo = false;
+  const cancelButton = document.createElement('button');
+  
+  function onPointerMove(event) {
+    
+    if( event.clientX > startX + 10 ) {
+      
+      task.classList.add('deleting');
+      document.removeEventListener('pointerup', onPointerUpAfterPointerDown);
+      document.addEventListener('pointerup', onPointerUpAfterShortPointerMove);
+      
+    }
+    
+    if( event.clientX > startX + 60 ) {
+      
+      document.removeEventListener('pointerup', onPointerUpAfterShortPointerMove);
+      document.removeEventListener('pointermove', onPointerMove);
+      task.lastChild.style.display = 'none';
+      cancelButton.textContent = "Undo";
+      task.append(cancelButton);
+      cancelButton.addEventListener('click', cancelOfDelete);
+      
+      if(!IsCancelingDeleteByUndo) {
+        setTimeout(removeTask, 4000);
+      }
+      
+    }
+    
+  }
+  
+  function onPointerUpAfterShortPointerMove() {
+    
+    task.classList.remove('deleting');
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUpAfterShortPointerMove);
+    isCancelingByPointerUpAfterPointerShortMove = true;
+    
+  }
+  
+  if( isCancelingByPointerUpAfterPointerShortMove ) return;
+  
+  function cancelOfDelete() {
+    
+    cancelButton.removeEventListener('click', cancelOfDelete);
+    task.lastChild.remove();
+    task.firstChild.style.display = 'inline-block';
+    task.lastChild.style.display = 'inline-block';
+    task.classList.remove('deleting');
+    IsCancelingDeleteByUndo = true;
+
+  }
+  
+  function removeTask() {
+    if(IsCancelingDeleteByUndo) return;
+    task.remove();
+  }
+  
+}
+
+
 
 // development code:
 
-const test = document.querySelector('.test');
-test.addEventListener('click', addTestTasks)
+//const test = document.querySelector('.test');
+//test.addEventListener('click', addTestTasks)
 
-function addTestTasks() {
+/*function addTestTasks() {
   field.value = `Lorem ipsum: congue ipsum magna at orci mattis magna pharetra integer bibendum. Rutrum tempus pellentesque magna sodales elementum et metus lorem ultricies sodales, curabitur pellentesque amet ipsum mattis nam, lorem enim, ultricies: pellentesque sit. Congue pharetra diam tempus, arcu justo, morbi lectus non eget cursus elementum non, enim a vulputate. Eget curabitur maecenas diam at rutrum metus, gravida ipsum vitae elementum vivamus, sagittis congue.`;
   let newTask = createTask(field.value);
   list.appendChild(newTask);
@@ -145,4 +263,4 @@ Eu in leo justo nulla quisque cursus magna sodales quam fusce, sem urna. Eros ne
   list.appendChild(newTask);
   field.value = '';
   
-}
+}*/
