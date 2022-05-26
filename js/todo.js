@@ -8,8 +8,8 @@ button.addEventListener('click', addTask);
 document.addEventListener('keydown', function(event) {
   if(event.key == 'Enter') {addTask()}
 });
-document.addEventListener('dblclick', startEditTask);
-document.addEventListener('pointerdown', deleteTask);
+//document.addEventListener('dblclick', startEditTask);
+document.addEventListener('pointerdown', onPointerDown);
 
 
 function createTask(value) {
@@ -57,15 +57,11 @@ function completeTask(event) {
 }
 
 
-function startEditTask(event) {
+function startEditTask(event, task) {
+  console.log(task);
+  console.log(event);
+  //document.removeEventListener('dblclick', startEditTask);
   
-  const target = event.target;
-  if( target.className !== 'task' ) return;
-  
-  document.removeEventListener('dblclick', startEditTask);
-  document.removeEventListener('pointerdown', deleteTask);
-  
-  const task = target;
   const text = task.firstChild.textContent;
   task.firstChild.remove();
   task.lastChild.remove();
@@ -82,13 +78,14 @@ function startEditTask(event) {
   
   function pressEnterToEndEditTask(event) {
     
-    if( event.key == 'Enter' ) {
+    if( event.key === 'Enter' ) {
       finishEditTaskByEnter(task);
     }
     
   }
   
   function finishEditTaskByEnter(task) {
+    console.log(task);
     
     if( task.firstChild.value.trim() === '' ) return;
     finishEditTask(task);
@@ -97,14 +94,15 @@ function startEditTask(event) {
   }
   
   function finishEditTaskByOk(event) {
-  
+    
     if( event.target.previousElementSibling.value.trim() === '' ) return;
   
-      const task = event.target.parentElement;
-      finishEditTask(task);
-      document.removeEventListener('keydown', pressEnterToEndEditTask);
-      
-    }
+    const task = event.target.parentElement;
+    console.log(task);
+    finishEditTask(task);
+    document.removeEventListener('keydown', pressEnterToEndEditTask);
+    
+  }
   
 }
 
@@ -124,16 +122,13 @@ function finishEditTask(task) {
   
   task.append(checkbox);
   checkbox.addEventListener('click', completeTask);
-  document.addEventListener('dblclick', startEditTask);
-  document.addEventListener('pointerdown', deleteTask);
+  //document.addEventListener('dblclick', startEditTask);
+  document.addEventListener('pointerdown', onPointerDown);
   
 }
 
+function takeTask(event) { 
 
-
-function deleteTask (event) {
-  
-  
   const target = event.target;
   if( !(target.className === 'task' || target.parentElement.className === 'task') || target.className === 'status' ) return;
   let task;
@@ -142,8 +137,61 @@ function deleteTask (event) {
   } else if( target.className == 'task' ) {
     task = target;
   }
+  return task;
+  
+}
+
+
+function onPointerDown(event) {
+  
+  const task = takeTask(event);
+  if(!task) return;
   
   event.preventDefault();
+  
+  let isPointerUp = false;
+  
+  document.addEventListener('pointerup', onPointerUp);
+  
+  function onPointerUp() {
+    
+    isPointerUp = true;
+    document.removeEventListener('pointerup', onPointerUp);
+    document.removeEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointerdown', onDoublePointerDown);
+    let isDoublePointerDown = false;
+    
+    function onDoublePointerDown(event) {
+      
+      const task = takeTask(event);
+      if(!task) return;
+      document.removeEventListener('pointerdown', onDoublePointerDown);
+      isDoublePointerDown = true;
+      startEditTask(event, task);
+      
+    }
+    
+    setTimeout(cancelDoublePointerDown, 300);
+    
+    function cancelDoublePointerDown() {
+      
+      if(isDoublePointerDown) return;
+      document.removeEventListener('pointerdown', onDoublePointerDown);
+      document.addEventListener('pointerdown', onPointerDown);
+      
+    }
+    
+  }
+  
+  if(isPointerUp) return;
+  
+  deleteTask(event, task);
+  
+}
+
+
+function deleteTask(event, task) {
+  
   /*console.log(target);
   task.onselectstart = task.onmousedown 
   = task.firstChild.onselectstart = task.firstChild.onmousedown
@@ -177,7 +225,7 @@ function deleteTask (event) {
   const cancelButton = document.createElement('button');
   
   function onPointerMove(event) {
-    
+      
     if( event.clientX > startX + 10 ) {
       
       task.classList.add('deleting');
@@ -185,7 +233,7 @@ function deleteTask (event) {
       document.addEventListener('pointerup', onPointerUpAfterShortPointerMove);
       
     }
-    
+  
     if( event.clientX > startX + 60 ) {
       
       document.removeEventListener('pointerup', onPointerUpAfterShortPointerMove);
@@ -213,9 +261,9 @@ function deleteTask (event) {
   }
   
   if( isCancelingByPointerUpAfterPointerShortMove ) return;
-  
+
   function cancelOfDelete() {
-    
+  
     cancelButton.removeEventListener('click', cancelOfDelete);
     task.lastChild.remove();
     task.firstChild.style.display = 'inline-block';
@@ -224,13 +272,14 @@ function deleteTask (event) {
     IsCancelingDeleteByUndo = true;
 
   }
-  
+
   function removeTask() {
     if(IsCancelingDeleteByUndo) return;
     task.remove();
   }
   
 }
+
 
 
 
