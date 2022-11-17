@@ -6,9 +6,8 @@ const list = document.querySelector('.list');
 
 button.addEventListener('click', addTask);
 document.addEventListener('keydown', function(event) {
-  if(event.key == 'Enter') {addTask()}
+  if( event.key === 'Enter' ) {addTask()}
 });
-//document.addEventListener('dblclick', startEditTask);
 document.addEventListener('pointerdown', onPointerDown);
 
 
@@ -19,7 +18,8 @@ function createTask(value) {
   textBlock.textContent = value;
   task.append(textBlock);
   task.classList.add('task');
-  task.firstChild.classList.add('dontChangeCursor');
+  const target = task.firstChild;
+  target.classList.add('dontChangeCursor');
   
   const checkbox = document.createElement('input');
   checkbox.setAttribute('type', 'checkbox');
@@ -41,6 +41,7 @@ function addTask() {
     field.value = '';
     
   }
+  
 }
 
 
@@ -58,9 +59,6 @@ function completeTask(event) {
 
 
 function startEditTask(event, task) {
-  console.log(task);
-  console.log(event);
-  //document.removeEventListener('dblclick', startEditTask);
   
   const text = task.firstChild.textContent;
   task.firstChild.remove();
@@ -85,7 +83,6 @@ function startEditTask(event, task) {
   }
   
   function finishEditTaskByEnter(task) {
-    console.log(task);
     
     if( task.firstChild.value.trim() === '' ) return;
     finishEditTask(task);
@@ -98,7 +95,6 @@ function startEditTask(event, task) {
     if( event.target.previousElementSibling.value.trim() === '' ) return;
   
     const task = event.target.parentElement;
-    console.log(task);
     finishEditTask(task);
     document.removeEventListener('keydown', pressEnterToEndEditTask);
     
@@ -122,19 +118,20 @@ function finishEditTask(task) {
   
   task.append(checkbox);
   checkbox.addEventListener('click', completeTask);
-  //document.addEventListener('dblclick', startEditTask);
   document.addEventListener('pointerdown', onPointerDown);
   
 }
 
-function takeTask(event) { 
+
+function getTask(event) { 
 
   const target = event.target;
-  if( !(target.className === 'task' || target.parentElement.className === 'task') || target.className === 'status' ) return;
+  if( !(target.className === 'task' || target.parentElement.className === 'task') 
+    || target.className === 'status' ) return;
   let task;
-  if( target.parentElement.className == 'task' ) {
+  if( target.parentElement.className === 'task' ) {
     task = target.parentElement;
-  } else if( target.className == 'task' ) {
+  } else if( target.className === 'task' ) {
     task = target;
   }
   return task;
@@ -144,7 +141,7 @@ function takeTask(event) {
 
 function onPointerDown(event) {
   
-  const task = takeTask(event);
+  const task = getTask(event);
   if(!task) return;
   
   event.preventDefault();
@@ -163,8 +160,8 @@ function onPointerDown(event) {
     
     function onDoublePointerDown(event) {
       
-      const task = takeTask(event);
-      if(!task) return;
+      const task = getTask(event);
+      if( !task ) return;
       document.removeEventListener('pointerdown', onDoublePointerDown);
       isDoublePointerDown = true;
       startEditTask(event, task);
@@ -192,18 +189,8 @@ function onPointerDown(event) {
 
 function deleteTask(event, task) {
   
-  /*console.log(target);
-  task.onselectstart = task.onmousedown 
-  = task.firstChild.onselectstart = task.firstChild.onmousedown
-  task.onpointerdown = task.firstChild.onpointerdown = function() {
-    console.log('select was prevented')
-    return false
-  }*/
-  //task.onmousedown = null; // rewrite handler
-  
   task.setPointerCapture(event.pointerId);
   const startX = event.clientX;
-  
   
   document.addEventListener('pointerup', onPointerUpAfterPointerDown);
   document.addEventListener('pointermove', onPointerMove);
@@ -234,7 +221,7 @@ function deleteTask(event, task) {
       
     }
   
-    if( event.clientX > startX + 60 ) {
+    if( event.clientX > startX + 50 ) {
       
       document.removeEventListener('pointerup', onPointerUpAfterShortPointerMove);
       document.removeEventListener('pointermove', onPointerMove);
@@ -243,7 +230,7 @@ function deleteTask(event, task) {
       task.append(cancelButton);
       cancelButton.addEventListener('click', cancelOfDelete);
       
-      if(!IsCancelingDeleteByUndo) {
+      if( !IsCancelingDeleteByUndo ) {
         setTimeout(removeTask, 4000);
       }
       
@@ -260,8 +247,6 @@ function deleteTask(event, task) {
     
   }
   
-  if( isCancelingByPointerUpAfterPointerShortMove ) return;
-
   function cancelOfDelete() {
   
     cancelButton.removeEventListener('click', cancelOfDelete);
@@ -270,46 +255,14 @@ function deleteTask(event, task) {
     task.lastChild.style.display = 'inline-block';
     task.classList.remove('deleting');
     IsCancelingDeleteByUndo = true;
-
+    
   }
 
   function removeTask() {
-    if(IsCancelingDeleteByUndo) return;
+    
+    if( IsCancelingDeleteByUndo ) return;
     task.remove();
+    
   }
   
 }
-
-
-
-
-// development code:
-
-//const test = document.querySelector('.test');
-//test.addEventListener('click', addTestTasks)
-
-/*function addTestTasks() {
-  field.value = `Lorem ipsum: congue ipsum magna at orci mattis magna pharetra integer bibendum. Rutrum tempus pellentesque magna sodales elementum et metus lorem ultricies sodales, curabitur pellentesque amet ipsum mattis nam, lorem enim, ultricies: pellentesque sit. Congue pharetra diam tempus, arcu justo, morbi lectus non eget cursus elementum non, enim a vulputate. Eget curabitur maecenas diam at rutrum metus, gravida ipsum vitae elementum vivamus, sagittis congue.`;
-  let newTask = createTask(field.value);
-  list.appendChild(newTask);
-  field.value = `Lorem ipsum: congue ipsum magna at orci mattis magna pharetra integer bibendum. Rutrum tempus pellentesque magna sodales elementum et metus lorem ultricies sodales, curabitur pellentesque amet ipsum mattis nam, lorem enim, ultricies: pellentesque sit. Congue pharetra diam tempus, arcu justo, morbi lectus non eget cursus elementum non, enim a vulputate. Eget curabitur maecenas diam at rutrum metus, gravida ipsum vitae elementum vivamus, sagittis congue.
-
-Sit risus, quisque bibendum rutrum justo fusce duis diam in donec diam cursus commodo. Ipsum sapien justo bibendum pharetra, porta, amet ornare tempus at tellus. Non molestie ultricies nibh molestie ultricies sodales urna, curabitur auctor. Ligula quam justo elementum, cursus, pellentesque sit urna: ultricies eros gravida: in sagittis eget mattis pellentesque elementum et massa. Non sem, curabitur ultricies eros nec enim nec cursus donec, massa, leo commodo tellus leo duis eu commodo. Elementum leo massa nulla tellus vitae eget auctor tellus arcu, sed commodo integer sagittis nec, lorem rutrum donec cursus sit rutrum eu malesuada. In cursus mauris bibendum rutrum porta diam massa sodales, enim ornare congue porta ligula eu eros sapien — odio vitae at massa sed nam lorem, at.
-
-Auctor justo sit molestie vulputate vitae orci a fusce vivamus sapien maecenas ut nam sapien metus sed proin fusce pellentesque elementum. Vitae maecenas justo leo sem lectus cursus at adipiscing sodales donec sagittis amet — pellentesque integer eget in et mauris, maecenas justo a sem. Ligula leo curabitur nulla arcu proin porttitor ultricies gravida et lorem ipsum metus sapien curabitur odio at vivamus porttitor cursus. Et integer in eget ut: lorem et lectus metus maecenas adipiscing nulla eros vitae at leo: orci. Vulputate eu molestie — mauris sapien congue diam leo elementum et sapien et in porttitor diam rutrum gravida auctor commodo massa, pharetra non proin donec nec.`;
-  newTask = createTask(field.value);
-  list.appendChild(newTask);
-  field.value = `Lorem ipsum: congue ipsum magna at orci mattis magna pharetra integer bibendum. Rutrum tempus pellentesque magna sodales elementum et metus lorem ultricies sodales, curabitur pellentesque amet ipsum mattis nam, lorem enim, ultricies: pellentesque sit. Congue pharetra diam tempus, arcu justo, morbi lectus non eget cursus elementum non, enim a vulputate. Eget curabitur maecenas diam at rutrum metus, gravida ipsum vitae elementum vivamus, sagittis congue.
-
-Sit risus, quisque bibendum rutrum justo fusce duis diam in donec diam cursus commodo. Ipsum sapien justo bibendum pharetra, porta, amet ornare tempus at tellus. Non molestie ultricies nibh molestie ultricies sodales urna, curabitur auctor. Ligula quam justo elementum, cursus, pellentesque sit urna: ultricies eros gravida: in sagittis eget mattis pellentesque elementum et massa. Non sem, curabitur ultricies eros nec enim nec cursus donec, massa, leo commodo tellus leo duis eu commodo. Elementum leo massa nulla tellus vitae eget auctor tellus arcu, sed commodo integer sagittis nec, lorem rutrum donec cursus sit rutrum eu malesuada. In cursus mauris bibendum rutrum porta diam massa sodales, enim ornare congue porta ligula eu eros sapien — odio vitae at massa sed nam lorem, at.
-
-Auctor justo sit molestie vulputate vitae orci a fusce vivamus sapien maecenas ut nam sapien metus sed proin fusce pellentesque elementum. Vitae maecenas justo leo sem lectus cursus at adipiscing sodales donec sagittis amet — pellentesque integer eget in et mauris, maecenas justo a sem. Ligula leo curabitur nulla arcu proin porttitor ultricies gravida et lorem ipsum metus sapien curabitur odio at vivamus porttitor cursus. Et integer in eget ut: lorem et lectus metus maecenas adipiscing nulla eros vitae at leo: orci. Vulputate eu molestie — mauris sapien congue diam leo elementum et sapien et in porttitor diam rutrum gravida auctor commodo massa, pharetra non proin donec nec.
-
-Arcu et risus ligula ornare in sapien porttitor, magna vivamus sodales sagittis leo enim. Donec ornare, sodales, vivamus sapien molestie non duis ligula rutrum leo. Morbi porta justo, quisque molestie sodales vivamus pharetra ultricies, quisque malesuada donec gravida nam.
-
-Eu in leo justo nulla quisque cursus magna sodales quam fusce, sem urna. Eros nec pharetra metus justo, quisque bibendum lectus tempus at nulla adipiscing. Magna proin tempus: cursus sit — leo duis enim et sit — morbi. Nam: sed pharetra arcu, eros nec leo a malesuada gravida congue urna eros nam nibh bibendum. Ornare elementum molestie curabitur mauris nibh nec tellus curabitur tempus mauris pellentesque. At, urna auctor vivamus pellentesque tempus proin rutrum porta nec fusce gravida at morbi arcu maecenas ipsum orci. Tempus ornare adipiscing porttitor eu, porta, at bibendum malesuada tellus donec quisque, eros duis ornare enim mattis metus lectus diam sed sem.`;
-  newTask = createTask(field.value);
-  list.appendChild(newTask);
-  field.value = '';
-  
-}*/
